@@ -19,7 +19,7 @@ Claude Code reads personal skills from `~/.claude/skills/`, and an entry there m
 symlink, so clone once and link:
 
 ```bash
-git clone https://github.com/<you>/claude-skills-public.git ~/claude-skills-public
+git clone https://github.com/mmironova/claude-skills-public.git ~/claude-skills-public
 mkdir -p ~/.claude/skills
 ln -s ~/claude-skills-public/make-slides    ~/.claude/skills/make-slides
 ln -s ~/claude-skills-public/physics-plots  ~/.claude/skills/physics-plots
