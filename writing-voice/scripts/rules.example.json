@@ -1,0 +1,51 @@
+{
+  "_comment": "Example rules for one author: formal scientific prose, British spelling, no rhetorical flourishes. Copy to rules.json and edit. Patterns are Python regexes; rhetoric is matched case-insensitively.",
+
+  "max_words": 30,
+  "short_words": 10,
+
+  "target": {
+    "median words": "17 to 21",
+    "90th percentile": "25 to 33",
+    "share under 10 words": "below 10 %"
+  },
+
+  "rhetoric": [
+    "\\bremarkabl", "\\bstrikingl", "\\bcruciall", "\\belegant", "\\bsimply put",
+    "\\bnotabl[ye]\\b", "\\bin other words\\b", "\\bput differently\\b",
+    "\\bof course\\b", "\\bneedless to say\\b", "\\bit turns out\\b",
+    "\\bwhat matters\\b", "\\bthe (?:real|true) (?:question|limit|problem)\\b",
+    "\\bgame.chang", "\\bparadigm\\b", "\\bunlock", "\\bleverag"
+  ],
+
+  "fragment_starts": [
+    "(?:^|[.?!]\\s+)Not\\b", "(?:^|[.?!]\\s+)Because\\b", "(?:^|[.?!]\\s+)Nor\\b"
+  ],
+
+  "spelling": [
+    ["characteriz", "British: characterised"],
+    ["analyz", "British: analysed"],
+    ["\\banalog\\b", "British: analogue"],
+    ["behavior\\b", "British: behaviour"],
+    ["\\bmodeling\\b", "British: modelling"],
+    ["\\bmodeled\\b", "British: modelled"],
+    ["ioniz", "British: ionisation"],
+    ["optimiz", "British: optimised"],
+    ["\\bcolor", "British: colour"],
+    ["\\bcenter", "British: centre"],
+    ["parametriz", "British: parametrisation"],
+    ["\\bfiber", "British: fibre"],
+    ["\\bgray\\b", "British: grey"]
+  ],
+
+  "naming": [
+    ["\\bI\\b (?:have|will|found|used|show)", "first person singular"],
+    ["\\bPROJECT (?:approach|technique|method)\\b", "PROJECT is the project name, not the technique"]
+  ],
+
+  "flag_dashes": true,
+  "flag_semicolons": true,
+  "flag_x_not_y": true,
+  "flag_questions": true,
+  "flag_placeholders": true
+}

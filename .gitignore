@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+writing-voice/references/voice-profile.md
+writing-voice/scripts/rules.json
