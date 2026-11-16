@@ -71,14 +71,31 @@ placeholders: take the real ones from the analysis.
 
 ## Distributions and efficiencies (quick look)
 
-- **Histograms**: draw with `HIST E`, overlays with `HIST E SAME`.
+- **Histograms**: `ps.th1(...)` from arrays; draw with `HIST E`, overlays with `HIST E SAME`. Save
+  with `ps.save_linlog(c, hists, stem)`, which writes `stem_lin` and `stem_log` with headroom for
+  the label and legend.
 - **Mass distributions**: linear y. Label the y axis "Events / N MeV".
+- **Other y axes**: plain events or fractions with the bin width ("Fraction of events / 0.025").
+- **Model comparisons**: one model solid, the other dashed with a light opaque fill
+  (`ps.tint(..., 0.88)`).
+- **Legend header**: when entries carry numbers, put their meaning in the header and keep the
+  entries short.
 - **Efficiencies**: `TEfficiency` with `SetDirectory(nullptr)`, and the frame maximum at about 1.9
   so the label sits above the data.
+- **Selection in the label**: when a cut changes, check the label still describes the selection
+  that was applied.
 
 ## Heatmaps of a 2D grid
 
-- **Margins**: top 0.30 for a 3-4 line header, right 0.17 for the z axis with units. Use one fixed
+`ps.grid_heatmap(name, xlabels, ylabels, cells, header, ztitle, zmin, zmax, stem)`; see
+`scripts/example_grid_heatmap.py`.
+
+- **Header**: 3-4 lines under the experiment label: process, region and √s; what the map shows;
+  one small line that explains the cell contents and markers.
+- **Margins**: top 0.30 for the header, right 0.17 for the z axis titled with units. Use one fixed
   z range per family of maps so they can be compared.
-- **Cells**: one large number plus at most two short small lines. Never stack super- and subscripts
-  in a cell. Leave a cell white when it is missing or has low statistics, and say so in the header.
+- **Cells**: one large number plus at most two short small lines (`±err`, `+up −down`,
+  `(fraction)`). Never stack super- and subscripts (`^{+a}_{-b}`) in a cell; they overlap. Cell
+  text switches from white to black on light cells.
+- **Missing or low statistics**: leave missing cells white and mark low-statistics cells with `*`;
+  say what both mean in the header.

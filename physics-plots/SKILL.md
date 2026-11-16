@@ -8,10 +8,12 @@ description: Make publication-quality physics plots with ROOT in ATLAS style - l
 ROOT plots in the ATLAS style. Every plot leaves as a vector PDF plus a PNG, and every plot gets
 looked at before it is reported.
 
-`scripts/plotstyle.py` holds the style setup, palettes, labels, frames, bands, masked-window boxes
-and the save route. Import it rather than re-deriving them; `scripts/example_limit_plot.py` is a
-worked example that also serves as a smoke test. `references/recipes.md` has layouts for the
-figure types this covers.
+`scripts/plotstyle.py` holds the style setup, palettes, labels, frames, bands, masked-window boxes,
+histograms with lin/log saving (`th1`, `save_linlog`), grid heatmaps with numbers in each cell
+(`grid_heatmap`) and the save route. Import it rather than re-deriving them
+(`sys.path.insert(0, "<skill dir>/scripts"); import plotstyle as ps`).
+`scripts/example_limit_plot.py` and `scripts/example_grid_heatmap.py` are worked examples that also
+serve as smoke tests. `references/recipes.md` has layouts for the figure types this covers.
 
 ## Environment
 

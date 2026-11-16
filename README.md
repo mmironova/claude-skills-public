@@ -1,13 +1,14 @@
 # Claude Code skills for scientific work
 
-Three skills for [Claude Code](https://claude.com/claude-code), written for the kind of
-work that ends in a paper: making slides from results, drawing physics plots with ROOT,
-and keeping prose in one author's voice.
+Four skills for [Claude Code](https://claude.com/claude-code), written for the kind of
+work that ends in a paper: getting at ATLAS data on NERSC, drawing physics plots with ROOT,
+making slides from results, and keeping prose in one author's voice.
 
 | Skill | What it does |
 |---|---|
+| [`atlas-file-access`](atlas-file-access/) | Finds, checks, downloads and reads ATLAS data and MC files on NERSC Perlmutter: rucio and AnalysisBase inside the ATLAS grid image via shifter, disk-vs-tape checks, remote reads, xAOD pyROOT patterns, and per-file scans spread over a compute node. |
 | [`make-slides`](make-slides/) | Builds Google Slides decks from a .pptx template with python-pptx, edits existing decks through the Slides API, gets figures in through a link-shared Drive folder, and checks the result by rendering it to PNGs and looking at them. |
-| [`physics-plots`](physics-plots/) | ROOT plots in ATLAS style: limit plots with Brazil bands, 2D exclusion planes, p-value scans, distributions and heatmaps, with a style helper and a save route that produces a cropped vector PDF with embedded fonts plus a clean PNG. |
+| [`physics-plots`](physics-plots/) | ROOT plots in ATLAS style: limit plots with Brazil bands, 2D exclusion planes, p-value scans, distributions with lin/log versions and grid heatmaps with numbers in each cell, with a style helper and a save route that produces a cropped vector PDF with embedded fonts plus a clean PNG. |
 | [`writing-voice`](writing-voice/) | A method and a linter for writing in a particular author's voice: a profile built from their own paragraphs and corrections, and a checker that reports sentence statistics and flags the habits they avoid. |
 
 Each is a plain Claude Code skill: a `SKILL.md` with YAML frontmatter, plus `scripts/`
@@ -21,6 +22,7 @@ symlink, so clone once and link:
 ```bash
 git clone https://github.com/mmironova/claude-skills-public.git ~/claude-skills-public
 mkdir -p ~/.claude/skills
+ln -s ~/claude-skills-public/atlas-file-access ~/.claude/skills/atlas-file-access
 ln -s ~/claude-skills-public/make-slides    ~/.claude/skills/make-slides
 ln -s ~/claude-skills-public/physics-plots  ~/.claude/skills/physics-plots
 ln -s ~/claude-skills-public/writing-voice  ~/.claude/skills/writing-voice
@@ -35,9 +37,12 @@ at `<repo>/.claude/skills/` or enable it on the account.
 
 ## Fill in your own details
 
-The skills deliberately contain no account-specific values. Three things need supplying
+The skills deliberately contain no account-specific values. A few things need supplying
 the first time you use them, and are best recorded in your project's `CLAUDE.md`:
 
+- **`atlas-file-access`**: your NERSC allocation for compute-node scans, as
+  `NERSC_ACCOUNT` (default `atlas`), and a valid ATLAS grid proxy on the login node you
+  work from.
 - **`make-slides`**: the Drive id of the deck whose .pptx export is your template, the
   name already written on its footer, and the id of a Drive folder shared as
   *anyone with the link → Viewer*, used as a staging area for figures.
@@ -50,6 +55,8 @@ the first time you use them, and are best recorded in your project's `CLAUDE.md`
 
 ## Dependencies
 
+- `atlas-file-access`: NERSC Perlmutter with CVMFS and shifter, ATLAS VO membership for
+  rucio and grid reads. Everything else comes from the ATLAS grid image and CVMFS.
 - `make-slides`: `python-pptx`, `Pillow`, and `pymupdf` for the render check. The Drive
   and Slides connectors are used through Claude Code's MCP connectors.
 - `physics-plots`: pyROOT. The ATLAS style macros are loaded from CVMFS when present and

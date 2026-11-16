@@ -243,6 +243,86 @@ def segments(points, breaks=(), max_gap=None):
     return runs
 
 
+# --------------------------------------------------------------------------- histograms (quick look)
+def th1(name, edges, values, color, weights=None, norm=False, width=2, style=1, fill=None, xtitle="", ytitle=""):
+    """TH1D filled from a sequence. `edges` = (nbins, lo, hi) or explicit bin edges (e.g. log bins).
+    Under/overflow is clipped into the first/last bin. `fill` = opaque fill colour (use tint(), not alpha)."""
+    if isinstance(edges, tuple):
+        h = ROOT.TH1D(name, "", edges[0], edges[1], edges[2]); lo, hi = edges[1], edges[2]
+    else:
+        h = ROOT.TH1D(name, "", len(edges) - 1, array.array("d", edges)); lo, hi = edges[0], edges[-1]
+    h.Sumw2(); h.SetDirectory(0)
+    eps = 1e-9 * (hi - lo)
+    for i, x in enumerate(values):
+        h.Fill(min(max(x, lo + eps), hi - eps), 1.0 if weights is None else weights[i])
+    if norm and h.Integral() > 0:
+        h.Scale(1.0 / h.Integral())
+    h.SetLineColor(color); h.SetMarkerColor(color); h.SetLineWidth(width); h.SetLineStyle(style); h.SetMarkerSize(0)
+    if fill is not None:
+        h.SetFillColor(fill)
+    h.GetXaxis().SetTitle(fix(xtitle)); h.GetYaxis().SetTitle(fix(ytitle))
+    return keep(h)
+
+
+def save_linlog(c, hists, stem, lin_headroom=1.7, log_headroom=300, logmin=None, **save_kw):
+    """Save stem_lin and stem_log of an overlay whose first histogram owns the axes. The headroom keeps the label
+    block and legend clear of the data; log plots with a big legend can need x1000-x5000."""
+    contents = [h.GetBinContent(b) for h in hists for b in range(1, h.GetNbinsX() + 1)]
+    mx = max(contents)
+    mn = logmin or max(min([v for v in contents if v > 0] + [mx]) * 0.5, mx * 1e-5)
+    for h in hists:                       # every histogram: SAME overlays with an unset minimum break log axes
+        h.SetMaximum(mx * lin_headroom); h.SetMinimum(0)
+    c.SetLogy(False); c.Modified(); c.Update()
+    save(c, f"{stem}_lin", **save_kw)
+    for h in hists:
+        h.SetMaximum(mx * log_headroom); h.SetMinimum(mn)
+    c.SetLogy(True); c.Modified(); c.Update()
+    save(c, f"{stem}_log", **save_kw)
+    c.SetLogy(False)
+
+
+# --------------------------------------------------------------------------- grid heatmaps
+def grid_heatmap(name, xlabels, ylabels, cells, header, ztitle, zmin, zmax, stem,
+                 xtitle="m_{X} [GeV]", ytitle="c#tau [mm]", dark_below=None, label="Internal", **save_kw):
+    """Parameter grid (e.g. mass x lifetime) as a colour map with text in every cell.
+
+    cells:  {(i, j): {"value": float, "lines": ["main", "small", "small"]}}, i indexes xlabels, j ylabels.
+            Missing cells stay white: say what white means in `header`.
+    header: lines under 'ATLAS Internal': process / region / sqrt(s), what the map shows, then one small line
+            explaining the cell contents and markers (e.g. '* N < 50').
+    Use one fixed (zmin, zmax) for a family of maps so they can be compared. Cell text turns white below
+    `dark_below` (default: lowest 30% of the z range)."""
+    c = canvas(name, right=0.17, top=0.30, left=0.14, bottom=0.14)
+    h = ROOT.TH2D(name, "", len(xlabels), 0, len(xlabels), len(ylabels), 0, len(ylabels))
+    h.SetDirectory(0); keep(h)
+    for i, s in enumerate(xlabels):
+        h.GetXaxis().SetBinLabel(i + 1, str(s))
+    for j, s in enumerate(ylabels):
+        h.GetYaxis().SetBinLabel(j + 1, str(s))
+    for (i, j), cell in cells.items():
+        h.SetBinContent(i + 1, j + 1, cell["value"])
+    h.GetXaxis().SetTitle(fix(xtitle)); h.GetYaxis().SetTitle(fix(ytitle)); h.GetZaxis().SetTitle(fix(ztitle))
+    h.GetXaxis().SetTitleOffset(1.15); h.GetYaxis().SetTitleOffset(1.1); h.GetZaxis().SetTitleOffset(1.2)
+    h.GetXaxis().SetLabelSize(0.05); h.GetYaxis().SetLabelSize(0.05)
+    h.SetMinimum(zmin); h.SetMaximum(zmax)
+    ROOT.gStyle.SetPalette(ROOT.kBird); ROOT.gStyle.SetNumberContours(100)
+    h.Draw("COLZ")
+    dark = dark_below if dark_below is not None else zmin + 0.3 * (zmax - zmin)
+    for (i, j), cell in cells.items():
+        lines = cell["lines"]
+        for k, ln in enumerate(lines):          # first line large, the others small, stacked top to bottom
+            y = j + (0.5 if len(lines) == 1 else 0.74 - 0.27 * k)
+            text(i + 0.5, y, ln, size=0.030 if k == 0 else 0.019, align=22, ndc=False,
+                 color=ROOT.kWhite if cell["value"] < dark else ROOT.kBlack)
+    text(0.14, 0.93, "ATLAS", size=0.045, font=72)
+    text(0.26, 0.93, label, size=0.045)
+    y = 0.87
+    for k, ln in enumerate(header):
+        text(0.14, y, ln, size=0.036 if k < 2 else 0.028)
+        y -= 0.05 if k < 2 else 0.04
+    return save(c, stem, **save_kw)
+
+
 # --------------------------------------------------------------------------- output
 def save(c, stem, dpi=200, png=True):
     """stem.pdf: vector, cropped to the canvas, all fonts embedded; stem.png: antialiased raster of that PDF.
@@ -253,9 +333,14 @@ def save(c, stem, dpi=200, png=True):
     """
     stem = Path(stem)
     stem.parent.mkdir(parents=True, exist_ok=True)
+    before = {id(p) for p in c.GetListOfPrimitives()}
     c.RedrawAxis()
     eps, pdf = stem.with_suffix(".eps"), stem.with_suffix(".pdf")
     c.SaveAs(str(eps))
+    # RedrawAxis leaves a frozen copy of the frame histogram on the pad; drop it so a later save of the same
+    # canvas (e.g. the _log version after _lin) does not paint stale axis ranges.
+    for p in [p for p in c.GetListOfPrimitives() if id(p) not in before]:
+        c.GetListOfPrimitives().Remove(p)
     subprocess.run(["gs", "-q", "-dNOPAUSE", "-dBATCH", "-dSAFER", "-sDEVICE=pdfwrite", "-dEPSCrop",
                     "-dCompatibilityLevel=1.5", "-dPDFSETTINGS=/prepress", "-dEmbedAllFonts=true", "-dSubsetFonts=true",
                     "-dAutoRotatePages=/None", f"-sOutputFile={pdf}",
